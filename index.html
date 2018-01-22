@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ch">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="page.css" type="text/css" rel="stylesheet"/>
+    <script src="http://www.jq22.com/jquery/jquery-1.10.2.js"></script>
+    <script type="text/javascript" src="page.js"></script>
+</head>
+<body>
+<ul class="page" id="page">
+    <li id="shouye" class="p-prev disabled">
+        <a href='javascript:indexpage(1);'>首 页</a>
+    </li>
+    <li id="shangyiye" class="p-prev disabled" >
+        <a href='javascript:indexpage(-1);'><i></i>上一页</a>
+    </li>
+    <li ><a id="one" href="javascript:void(0);" >1</a></li>
+    <li><a id="two" href="javascript:void(0);" >2</a></li>
+    <li><a id="three" href="javascript:void(0);" >3</a></li>
+    <li class="more"><a id="five" href="javascript:void(0);" >...</a></li>
+    <li><a id="fore" href="javascript:void(0);" >13855</a></li>
+    <li class='p-next'>
+        <a href='javascript:indexpage(-3);' onclick="jumpToPage('2','/goods/ajaxqueryGoodsList.do.html','','goodsListContainer','13855', listPageCallback);">下一页<i></i></a>
+    </li>
+    <li id="weiye" class='p-next'>
+        <a href='javascript:void(0);' onclick="indexpage(0);">尾 页</a>
+    </li>
+    <li class="total">
+      <span id="span_number">共13855页 到第<input type="text" id="input_number" class="page-txtbox" />页
+       <input name="" value="确定" type="button" onclick="jumpToPage(jQuery('#input_number').val(),'/goods/ajaxqueryGoodsList.do.html','','goodsListContainer','13855', listPageCallback);" class="page-btn"/>
+      </span>
+    </li>
+</ul>
+
+<input id="jiazai" type="hidden" ><!-- 当前页码 -->
+<input id="totalpage" type="hidden" ><!-- 总页码 -->
+
+
+<script>
+    $(function(){
+        $('#jiazai').val(1);//给当前页码进行赋值，默认为第一页
+        ajaxfunction(page);//这个方法是抽取的ajax后台访问的方法
+    });
+    //抽取ajax的方法
+    function ajaxfunction(page){
+        $.ajax({
+            type:'get',
+            url:'https://testcms.chetuobang.com/api/content/getDraftBoxList',//请求的url地址
+            data:{
+                pageIndex:page
+            },
+            success:function(data){
+                //返回值在进行访问抽取的方法，从后台返回
+                commonfunction(data);
+            }
+        });
+    }
+    //抽取拼串的方法
+    function commonfunction(data){
+        $('#projectlist').find("li").remove();
+        for (var i=0,html;i<data.results.dataList.length;i++ )
+        {
+            html +='<tr>\n' +
+                '                <td>'+data.results.dataList[i].attributeName+'</td>\n' +
+                '                <td>'+data.results.dataList[i].className+'</td>\n' +
+                '                <td>'+data.results.dataList[i].author+'</td>\n' +
+                '                <td>'+data.results.dataList[i].statusName+'</td>\n' +
+                '                <td>'+data.results.dataList[i].update_time+'</td>\n' +
+                '                <td>'+data.results.dataList[i].title+'</td>\n' +
+                '            </tr>'
+            /*****因为此页面是动态加载的，这里主要就是进行拼串，代码也不少，就不漏出来占空间了*****/
+        }　　　　　//开始是分页的核心了
+        if(data.length>0){
+            //设置页码
+            var pading = data[0].padingnum;//总页码
+            $('#totalpage').val(pading);
+            var page = $('#jiazai').val();//当前页
+            $('#countpage').html("<b id='currentPageNo'>"+page+"</b>/"+pading+"");
+            $('#span_number').html("共"+pading+"页 到第<input type='text' id='input_number' class='page-txtbox' />页<input name='' value='确定' type='button' onclick='indexpage(-2)'/goods/ajaxqueryGoodsList.do.html','','goodsListContainer','"+pading+"', listPageCallback);' class='page-btn'/>")
+        }else{
+            $('#countpage').html("<b id='currentPageNo'>"+0+"</b>/"+0+"");
+        }
+        //设置分页的底部 就是 首页 1 2 3 4 5 6 尾页
+        var pading = data[0].padingnum;//总页码href="javascript:void(0);"
+        var nowpage = $('#jiazai').val();//当前页
+        //one two three five fore<br>　　　　　　//下面代码看着是比较麻烦，但是也不难理解 全是一样的代码，只不过是加了些判断
+        if(nowpage<5 ){
+            $('#one').text(1);
+            $('#one').attr('href','javascript:pagenum("'+1+'");');
+            $('#two').text(2);
+            $('#two').attr('href','javascript:pagenum("'+(2)+'");');
+            $('#three').text(3);
+            $('#three').attr('href','javascript:pagenum("'+(3)+'");');
+            $('#five').text(4);
+            $('#five').attr('href','javascript:pagenum("'+(4)+'");');
+            $('#fore').text(5);
+            $('#fore').attr('href','javascript:pagenum("'+(5)+'");');
+            $('#five').parent().show();
+            $('#fore').parent().show();
+        }else{
+            //alert("已经不是第五页了");
+            //设置中间的为当前页
+            $('#one').text(Number(nowpage)-2);
+            $('#one').attr('href','javascript:indexpage("'+(Number(nowpage)-2)+'");');
+            $('#two').text(Number(nowpage)-1);
+            $('#two').attr('href','javascript:indexpage("'+(Number(nowpage)-1)+'");');
+            $('#three').text(nowpage);
+            $('#three').attr('href','javascript:indexpage("'+(nowpage)+'");');
+            $('#five').parent().show();
+            $('#fore').parent().show();
+            //判断下一页是否超过了总页数
+            if(Number(nowpage)+1>pading){
+                $('#five').parent().hide();
+                $('#fore').parent().hide();
+            }else{
+                $('#five').parent().show();
+                $('#five').text(Number(nowpage)+1);
+                $('#five').attr('href','javascript:indexpage("'+(Number(nowpage)+1)+'");');
+            }
+            //判断下一页的第二页是否超过了总页数
+            if(Number(nowpage)+2>pading){
+                $('#fore').parent().hide();
+            }else{
+                $('#fore').parent().show();
+                $('#fore').text(Number(nowpage)+2);
+                $('#fore').attr('href','javascript:indexpage("'+(Number(nowpage)+2)+'");');
+            }
+        }
+        //如果总页数小于5，这块代码主要就是设置 1 2 3 4 5 这些的显示和隐藏的
+        if(pading==0){
+            $('#one').parent().hide();
+            $('#two').parent().hide();
+            $('#three').parent().hide();
+            $('#five').parent().hide();
+            $('#fore').parent().hide();
+        }else if(pading==1){
+            $('#shouye').hide();
+            $('#weiye').hide();
+            $('#one').parent().hide();
+            $('#two').parent().hide();
+            $('#three').parent().hide();
+            $('#five').parent().hide();
+            $('#fore').parent().hide();
+        }else if(pading==2){
+            $('#one').parent().show();
+            $('#two').parent().show();
+            $('#three').parent().hide();
+            $('#five').parent().hide();
+            $('#fore').parent().hide();
+        }else if(pading==3){
+            $('#one').parent().show();
+            $('#two').parent().show();
+            $('#three').parent().show();
+            $('#five').parent().hide();
+            $('#fore').parent().hide();
+        }else if(pading==4){
+            $('#one').parent().show();
+            $('#two').parent().show();
+            $('#three').parent().show();
+            $('#five').parent().show();
+            $('#fore').parent().hide();
+        }else{
+            $('#one').parent().show();
+            $('#two').parent().show();
+            $('#three').parent().show();
+            $('#five').parent().show();
+            $('#fore').parent().show();
+        }
+        //设置高亮显示的，就是是第一页时，1亮，第二页时 2亮
+        $('#page a').each(function() {
+            $(this).parent().removeClass("current");
+            if($(this).text()==nowpage){
+                $(this).parent().addClass("current");
+            }
+        });
+        //分页完返回页面顶端
+        $("html,body").animate({scrollTop:0}, 500);
+        //最后，给当前页码加1
+        $('#jiazai').val(Number(bianlaing)+Number(1));
+    }
+
+</script>
+
+
+
+
+<!--currentpage="1" numbercount="100"-->
+    <!--<table border="1">-->
+        <!--<thead>-->
+            <!--<tr>-->
+                <!--<th>ididi</th>-->
+                <!--<th>wewe</th>-->
+                <!--<th>rdfs</th>-->
+                <!--<th>sdfsd</th>-->
+                <!--<th>sdfwe</th>-->
+                <!--<th>233r</th>-->
+            <!--</tr>-->
+        <!--</thead>-->
+        <!--<tbody>-->
+
+        <!--</tbody>-->
+    <!--</table>-->
+    <!--<div><ul class="page" maxshowpageitem="5" pagelistcount="1"  id="page"></ul></div>-->
+</body>
+</html>
+<script>
+    //请求第一页数据20条
+    $.ajax({
+        type:'GET',
+        url:'https://testcms.chetuobang.com/api/content/getDraftBoxList',
+        data:{
+            pageIndex:1
+        },
+        success:function(data){
+            //根据总数计算分页的的页数，每页显示10条数据
+            var count=data.results.totalCount/20;
+            if(count>1&&count<2){
+                $('#page').attr('maxshowpageitem','5');
+            }else{
+                console.log(999999)
+            }
+            for(var i=0,html;i<data.results.dataList.length;i++){
+                html +='<tr>\n' +
+                    '                <td>'+data.results.dataList[i].attributeName+'</td>\n' +
+                    '                <td>'+data.results.dataList[i].className+'</td>\n' +
+                    '                <td>'+data.results.dataList[i].author+'</td>\n' +
+                    '                <td>'+data.results.dataList[i].statusName+'</td>\n' +
+                    '                <td>'+data.results.dataList[i].update_time+'</td>\n' +
+                    '                <td>'+data.results.dataList[i].title+'</td>\n' +
+                    '            </tr>'
+            }
+            $('tbody').append(html);
+            html=null;
+        },
+        fail:function(info){
+            console.log("请求失败了");
+            console.log(info)
+        }
+    });
+</script>
+<script type="text/javascript">
+    function tt(dd){
+        alert(dd);
+    }
+
+    var GG = {
+        "kk":function(mm){
+            alert(mm);
+            $.ajax({
+                type:'GET',
+                url:'https://testcms.chetuobang.com/api/content/getDraftBoxList',
+                data:{
+                    pageIndex:mm
+                },
+                success:function(data){
+                    console.log("请求成功");
+                    console.log(data)
+                    //根据总数计算分页的的页数，每页显示10条数据
+                    var count=data.results.totalCount/20;
+
+                    $('tbody').html('');
+                    for(var i=0,html;i<data.results.dataList.length;i++){
+                        html +='<tr>\n' +
+                            '                <td>'+data.results.dataList[i].attributeName+'</td>\n' +
+                            '                <td>'+data.results.dataList[i].className+'</td>\n' +
+                            '                <td>'+data.results.dataList[i].author+'</td>\n' +
+                            '                <td>'+data.results.dataList[i].statusName+'</td>\n' +
+                            '                <td>'+data.results.dataList[i].update_time+'</td>\n' +
+                            '                <td>'+data.results.dataList[i].title+'</td>\n' +
+                            '            </tr>'
+                    }
+                    $('tbody').append(html);
+                    html=null;
+                },
+                fail:function(info){
+                    console.log("请求失败了");
+                    console.log(info)
+                }
+            });
+            //console.log("hellos");
+            //window.location.href="test.html?page="+mm;
+        }
+    }
+    $("#page").initPage(100,1,GG.kk);
+    /*$("#page1").initPage(100,1,GG.kk);*/
+</script>
